@@ -16,6 +16,8 @@ Preferred communication style: Simple, everyday language.
 - Set up both debug and signed release build processes
 - Added Android-specific configurations and permissions
 - Created build scripts and documentation for mobile deployment
+- Fixed Java version compatibility issue (GitHub Actions: Java 17 → Java 21)
+- Build errors resolved, APK generation ready for production
 
 ## System Architecture
 
