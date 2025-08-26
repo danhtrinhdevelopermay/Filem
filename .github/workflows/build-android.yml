@@ -13,7 +13,7 @@ permissions:
 jobs:
   build-android:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     
     steps:
     - name: Checkout code
@@ -57,16 +57,16 @@ jobs:
     - name: Clean Gradle cache
       run: cd android && ./gradlew clean
 
-    - name: Build debug APK
-      run: cd android && ./gradlew assembleDebug --no-daemon --stacktrace
+    - name: Build debug APK with timeout
+      run: cd android && timeout 1800 ./gradlew assembleDebug --no-daemon --stacktrace --info --parallel
       env:
-        GRADLE_OPTS: -Xmx4096m -Dorg.gradle.daemon=false
+        GRADLE_OPTS: -Xmx4096m -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true
 
     - name: Build release APK
-      run: cd android && ./gradlew assembleRelease --no-daemon --stacktrace
+      run: cd android && ./gradlew assembleRelease --no-daemon --stacktrace --info --parallel
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
       env:
-        GRADLE_OPTS: -Xmx4096m -Dorg.gradle.daemon=false
+        GRADLE_OPTS: -Xmx4096m -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true
 
     - name: Upload debug APK artifact
       uses: actions/upload-artifact@v4

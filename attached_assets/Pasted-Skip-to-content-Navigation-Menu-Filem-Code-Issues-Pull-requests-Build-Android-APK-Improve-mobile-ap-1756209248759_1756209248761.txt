@@ -1,0 +1,72 @@
+Skip to content
+Navigation Menu
+Filem
+
+Code
+Issues
+Pull requests
+Build Android APK
+Improve mobile app building process by optimizing Gradle and CI settings #8
+build-android
+failed now in 4m 46s
+1s
+1s
+3s
+1s
+18s
+2s
+2m 26s
+5s
+0s
+0s
+45s
+1m 2s
+Run cd android && ./gradlew assembleDebug --no-daemon --stacktrace
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Configuration on demand is an incubating feature.
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Task :capacitor-android:preBuild UP-TO-DATE
+> Task :capacitor-app:preBuild UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:preBuild UP-TO-DATE
+> Task :capacitor-app:preDebugBuild UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:preDebugBuild UP-TO-DATE
+> Task :capacitor-android:preDebugBuild UP-TO-DATE
+> Task :capacitor-android:writeDebugAarMetadata
+> Task :capacitor-cordova-android-plugins:writeDebugAarMetadata
+> Task :capacitor-haptics:preBuild UP-TO-DATE
+> Task :capacitor-haptics:preDebugBuild UP-TO-DATE
+> Task :capacitor-keyboard:preBuild UP-TO-DATE
+> Task :capacitor-keyboard:preDebugBuild UP-TO-DATE
+> Task :capacitor-app:writeDebugAarMetadata
+> Task :capacitor-status-bar:preBuild UP-TO-DATE
+> Task :capacitor-status-bar:preDebugBuild UP-TO-DATE
+> Task :capacitor-keyboard:writeDebugAarMetadata
+> Task :capacitor-haptics:writeDebugAarMetadata
+> Task :capacitor-status-bar:writeDebugAarMetadata
+> Task :capacitor-android:generateDebugResValues
+> Task :capacitor-cordova-android-plugins:generateDebugResValues
+> Task :capacitor-app:generateDebugResValues
+> Task :capacitor-android:generateDebugResources
+> Task :capacitor-cordova-android-plugins:generateDebugResources
+> Task :capacitor-app:generateDebugResources
+> Task :capacitor-app:packageDebugResources
+> Task :capacitor-android:packageDebugResources
+> Task :capacitor-keyboard:generateDebugResValues FROM-CACHE
+> Task :capacitor-keyboard:generateDebugResources FROM-CACHE
+> Task :capacitor-keyboard:packageDebugResources
+> Task :capacitor-status-bar:generateDebugResValues FROM-CACHE
+0s
+0s
+0s
+0s
+0s
+0s
+0s
+0s

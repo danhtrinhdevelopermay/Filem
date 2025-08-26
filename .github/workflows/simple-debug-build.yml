@@ -1,0 +1,69 @@
+name: Simple Debug APK Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master, develop ]
+
+permissions:
+  contents: write
+
+jobs:
+  debug-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        api-level: 35
+        build-tools: 35.0.0
+        
+    - name: Accept Android SDK licenses
+      run: yes | sdkmanager --licenses || echo "Failed to accept licenses"
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build web app
+      run: npm run build
+      env:
+        NODE_ENV: production
+
+    - name: Sync Capacitor
+      run: npx cap sync android
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x android/gradlew
+
+    - name: Build debug APK only
+      run: cd android && timeout 900 ./gradlew assembleDebug --no-daemon --stacktrace --info
+      env:
+        GRADLE_OPTS: -Xmx3072m -Dorg.gradle.daemon=false
+
+    - name: Upload debug APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug-simple
+        path: android/app/build/outputs/apk/debug/app-debug.apk
+
+    - name: Build Summary
+      run: |
+        echo "Simple debug build completed!"
+        ls -la android/app/build/outputs/apk/debug/ || echo "APK directory not found"
