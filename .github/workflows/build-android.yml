@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: write
-  releases: write
 
 jobs:
   build-android:
@@ -68,32 +67,10 @@ jobs:
         name: app-release
         path: android/app/build/outputs/apk/release/app-release-unsigned.apk
 
-    - name: Create Release
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-      uses: ncipollo/release-action@v1
-      with:
-        tag: v${{ github.run_number }}
-        name: File Storage App v${{ github.run_number }}
-        body: |
-          ## File Storage App Android Build
-          
-          Auto-generated release from commit: ${{ github.sha }}
-          
-          ### Download APK:
-          - Debug APK for testing and development
-          - Release APK for production use
-          
-          ### Installation:
-          1. Download APK file
-          2. Enable "Install from Unknown Sources" on Android device
-          3. Install APK file
-          
-          Built on: ${{ github.run_started_at }}
-        artifacts: |
-          android/app/build/outputs/apk/debug/app-debug.apk
-          android/app/build/outputs/apk/release/app-release-unsigned.apk
-        token: ${{ github.token }}
-        draft: false
-        prerelease: false
-        allowUpdates: true
-        replacesArtifacts: true
+    - name: Build Summary
+      run: |
+        echo "Build completed successfully!"
+        echo "Debug APK: android/app/build/outputs/apk/debug/app-debug.apk"
+        if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]; then
+          echo "Release APK: android/app/build/outputs/apk/release/app-release-unsigned.apk"
+        fi
