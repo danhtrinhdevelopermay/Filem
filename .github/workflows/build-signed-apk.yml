@@ -1,0 +1,119 @@
+name: Build Signed Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version name for the APK'
+        required: true
+        default: '1.0.0'
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+        - release
+        - debug
+
+jobs:
+  build-signed-apk:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build web application
+      run: npm run build
+      env:
+        NODE_ENV: production
+
+    - name: Sync Capacitor files
+      run: npx cap sync android
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x android/gradlew
+
+    - name: Decode Keystore
+      if: ${{ github.event.inputs.build_type == 'release' }}
+      env:
+        ENCODED_STRING: ${{ secrets.KEYSTORE_BASE64 }}
+      run: |
+        echo $ENCODED_STRING | base64 -di > android/app/keystore.jks
+
+    - name: Create key.properties
+      if: ${{ github.event.inputs.build_type == 'release' }}
+      run: |
+        echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+        echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+        echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+        echo "storeFile=keystore.jks" >> android/key.properties
+
+    - name: Build Release APK
+      if: ${{ github.event.inputs.build_type == 'release' }}
+      run: cd android && ./gradlew assembleRelease
+
+    - name: Build Debug APK
+      if: ${{ github.event.inputs.build_type == 'debug' }}
+      run: cd android && ./gradlew assembleDebug
+
+    - name: Upload Release APK
+      if: ${{ github.event.inputs.build_type == 'release' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: file-storage-app-release-${{ github.event.inputs.version_name }}
+        path: android/app/build/outputs/apk/release/app-release.apk
+
+    - name: Upload Debug APK
+      if: ${{ github.event.inputs.build_type == 'debug' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: file-storage-app-debug-${{ github.event.inputs.version_name }}
+        path: android/app/build/outputs/apk/debug/app-debug.apk
+
+    - name: Create GitHub Release
+      if: ${{ github.event.inputs.build_type == 'release' }}
+      uses: ncipollo/release-action@v1
+      with:
+        tag: v${{ github.event.inputs.version_name }}
+        name: File Storage App v${{ github.event.inputs.version_name }}
+        body: |
+          ## File Storage App v${{ github.event.inputs.version_name }}
+          
+          ### Features:
+          - 📁 Secure file storage in PostgreSQL database
+          - 👤 User authentication and session management
+          - 📱 Mobile-optimized interface with Capacitor
+          - 🔒 Password-protected access to personal files
+          - 📋 File upload, preview, and management
+          
+          ### Installation:
+          Download the APK file below and install on your Android device.
+          Note: You may need to enable "Install from Unknown Sources" in your device settings.
+          
+          ### Changes in this release:
+          - Built from commit: ${{ github.sha }}
+          - Build date: ${{ github.run_started_at }}
+        artifacts: android/app/build/outputs/apk/release/app-release.apk
+        token: ${{ secrets.GITHUB_TOKEN }}
+        draft: false
+        prerelease: false

@@ -1,0 +1,51 @@
+name: Test APK Build
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Test web build
+      run: npm run build
+      env:
+        NODE_ENV: production
+
+    - name: Test Capacitor sync
+      run: npx cap sync android
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: web-build-output
+        path: dist/public/
+        retention-days: 1
+
+    - name: Check Android project structure
+      run: |
+        echo "=== Android project structure ==="
+        find android -type f -name "*.gradle" -o -name "*.xml" -o -name "*.json" | head -20
+        echo "=== Build output ==="
+        ls -la dist/public/
+        echo "=== Capacitor config ==="
+        cat capacitor.config.ts
+        echo "=== Check gradlew ==="
+        ls -la android/gradlew
+        echo "=== Check Android manifest ==="
+        cat android/app/src/main/AndroidManifest.xml

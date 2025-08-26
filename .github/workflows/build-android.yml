@@ -1,0 +1,94 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build web app
+      run: npm run build
+      env:
+        NODE_ENV: production
+
+    - name: Sync Capacitor
+      run: npx cap sync android
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x android/gradlew
+
+    - name: Build debug APK
+      run: cd android && ./gradlew assembleDebug
+
+    - name: Build release APK
+      run: cd android && ./gradlew assembleRelease
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    - name: Upload debug APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: android/app/build/outputs/apk/debug/app-debug.apk
+
+    - name: Upload release APK artifact  
+      uses: actions/upload-artifact@v4
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      with:
+        name: app-release
+        path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+
+    - name: Create Release
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      id: create_release
+      uses: ncipollo/release-action@v1
+      with:
+        tag: v${{ github.run_number }}
+        name: File Storage App v${{ github.run_number }}
+        body: |
+          ## File Storage App Android Build
+          
+          📱 **Auto-generated release from commit:** ${{ github.sha }}
+          
+          ### Download APK:
+          - **Debug APK**: For testing and development
+          - **Release APK**: For production use
+          
+          ### Installation:
+          1. Download APK file
+          2. Enable "Install from Unknown Sources" on Android device
+          3. Install APK file
+          
+          Built on: ${{ github.run_started_at }}
+        artifacts: |
+          android/app/build/outputs/apk/debug/app-debug.apk
+          android/app/build/outputs/apk/release/app-release-unsigned.apk
+        token: ${{ secrets.GITHUB_TOKEN }}
+        draft: false
+        prerelease: false
