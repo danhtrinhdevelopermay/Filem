@@ -1,0 +1,85 @@
+name: Simple APK Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build web app
+      run: npm run build
+      env:
+        NODE_ENV: production
+
+    - name: Sync Capacitor
+      run: npx cap sync android
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x android/gradlew
+
+    - name: Build debug APK
+      run: cd android && ./gradlew assembleDebug
+
+    - name: Upload debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: file-storage-app-debug-${{ github.run_number }}
+        path: android/app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 30
+
+    - name: Build release APK (main branch only)
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      run: cd android && ./gradlew assembleRelease
+
+    - name: Upload release APK
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      uses: actions/upload-artifact@v4
+      with:
+        name: file-storage-app-release-${{ github.run_number }}
+        path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+        retention-days: 30
+
+    - name: Build summary
+      run: |
+        echo "## APK Build Complete! 🎉" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Files generated:" >> $GITHUB_STEP_SUMMARY
+        echo "- **Debug APK**: file-storage-app-debug-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]; then
+          echo "- **Release APK**: file-storage-app-release-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### How to download:" >> $GITHUB_STEP_SUMMARY
+        echo "1. Go to the **Actions** tab" >> $GITHUB_STEP_SUMMARY
+        echo "2. Click on this workflow run" >> $GITHUB_STEP_SUMMARY  
+        echo "3. Download APK from **Artifacts** section" >> $GITHUB_STEP_SUMMARY
+        echo "4. Install on Android device" >> $GITHUB_STEP_SUMMARY
