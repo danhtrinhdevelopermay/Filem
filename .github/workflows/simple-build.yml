@@ -45,7 +45,8 @@ jobs:
 
     - name: Create debug keystore
       run: |
-        keytool -genkey -v \
+        mkdir -p android/app
+        keytool -genkey -noprompt \
           -keystore android/app/debug.keystore \
           -keyalg RSA \
           -keysize 2048 \
@@ -53,13 +54,20 @@ jobs:
           -alias androiddebugkey \
           -storepass android \
           -keypass android \
-          -dname "CN=Debug,OU=Debug,O=Debug,L=Debug,S=Debug,C=US"
+          -dname "CN=Android Debug,OU=Android,O=Android,L=Mountain View,S=California,C=US"
+        echo "Keystore created successfully"
+        ls -la android/app/debug.keystore
 
     - name: Grant execute permission for gradlew
       run: chmod +x android/gradlew
 
     - name: Build debug APK
-      run: cd android && ./gradlew assembleDebug
+      run: |
+        cd android
+        echo "Starting debug APK build..."
+        ./gradlew assembleDebug --no-daemon --stacktrace
+        echo "Debug APK build completed"
+        ls -la app/build/outputs/apk/debug/
 
     - name: Upload debug APK
       uses: actions/upload-artifact@v4
@@ -70,7 +78,12 @@ jobs:
 
     - name: Build release APK (main branch only)
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-      run: cd android && ./gradlew assembleRelease
+      run: |
+        cd android
+        echo "Starting release APK build..."
+        ./gradlew assembleRelease --no-daemon --stacktrace
+        echo "Release APK build completed"
+        ls -la app/build/outputs/apk/release/
 
     - name: Upload release APK
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
