@@ -13,6 +13,7 @@ permissions:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
     - name: Checkout code
@@ -32,6 +33,12 @@ jobs:
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
+      with:
+        api-level: 35
+        build-tools: 35.0.0
+        
+    - name: Accept Android SDK licenses
+      run: yes | sdkmanager --licenses || echo "Failed to accept licenses"
 
     - name: Install dependencies
       run: npm ci
@@ -47,12 +54,19 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x android/gradlew
 
+    - name: Clean Gradle cache
+      run: cd android && ./gradlew clean
+
     - name: Build debug APK
-      run: cd android && ./gradlew assembleDebug
+      run: cd android && ./gradlew assembleDebug --no-daemon --stacktrace
+      env:
+        GRADLE_OPTS: -Xmx4096m -Dorg.gradle.daemon=false
 
     - name: Build release APK
-      run: cd android && ./gradlew assembleRelease
+      run: cd android && ./gradlew assembleRelease --no-daemon --stacktrace
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      env:
+        GRADLE_OPTS: -Xmx4096m -Dorg.gradle.daemon=false
 
     - name: Upload debug APK artifact
       uses: actions/upload-artifact@v4
