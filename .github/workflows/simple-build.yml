@@ -43,6 +43,18 @@ jobs:
     - name: Sync Capacitor
       run: npx cap sync android
 
+    - name: Create debug keystore
+      run: |
+        keytool -genkey -v \
+          -keystore android/app/debug.keystore \
+          -keyalg RSA \
+          -keysize 2048 \
+          -validity 10000 \
+          -alias androiddebugkey \
+          -storepass android \
+          -keypass android \
+          -dname "CN=Debug,OU=Debug,O=Debug,L=Debug,S=Debug,C=US"
+
     - name: Grant execute permission for gradlew
       run: chmod +x android/gradlew
 
